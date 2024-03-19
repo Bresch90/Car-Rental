@@ -136,7 +136,7 @@ const Rent = () => {
     const nameValidation = (e) => {
         const { name, value } = e.target;
         if (!value.length) {
-            setNameError('Name is required')
+            setNameError('Name is required!')
         } else if (!/^[a-zåäöA-ZÅÄÖ]+(\s[a-zåäöA-ZÅÄÖ]+)?$/.test(value)) {
             setNameError('Invalid name. Only letters and one spaces allowed.')
         } else if (value.length >= 30) {
@@ -304,9 +304,9 @@ const Rent = () => {
                         <DatePicker id="returnDate" minDate={minEndDate} maxDate={maxEndDate} selected={endDate} onChange={(date) => setEndDate(date)} />
                     </div>
                 </div>
-                <input type="text" name="driverName" value={formData.driverName} placeholder='Name of driver' onChange={nameValidation} maxLength={30} required></input>
+                <input type="text" data-testid="driverName" value={formData.driverName} placeholder='Name of driver' onChange={nameValidation} maxLength={30} required></input>
                 {nameError && <p className="error">{nameError}</p>}
-                <input type="number" name='driverAge' value={formData.driverAge} placeholder='Age of driver' onChange={ageValidation} min={1} max={100} required></input>
+                <input type="number" data-testid='driverAge' value={formData.driverAge} placeholder='Age of driver' onChange={ageValidation} min={1} max={100} required></input>
                 {ageError && <p className="error">{ageError}</p>}
                 <h2>Sum total = {formData.totalPrice.toLocaleString('sv-SE')} SEK</h2>
                 <button type="submit">Submit</button>
