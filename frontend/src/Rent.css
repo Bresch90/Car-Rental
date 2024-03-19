@@ -1,0 +1,41 @@
+  .Rent label {
+    text-align: left;
+    margin-right: 5px;
+  }
+  .Rent h1 {
+    font-size: 40px;
+    color: Black;
+    margin-bottom: 10px;
+    margin-top: -10px;
+  }
+  .Rent input, .Rent select {
+    width: 100%;
+    padding: 6px 10px;
+    margin: 10px 0;
+    border: 1px solid #dddddd;
+    box-sizing: border-box;
+    display: block;
+  }
+  .Rent button {
+    background: #00db33;
+    color: white;
+    border: 0;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+.Rent form {
+    max-width: 400px;
+    margin: 0 auto;
+    text-align: center;
+    border: 10px solid #007533; 
+    border-radius: 20px; 
+    padding: 20px; 
+}
+
+  .error {
+    color: red;
+    font-size: 0.8rem;
+    margin-top: 0.2rem;
+}

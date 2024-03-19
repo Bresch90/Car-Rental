@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap');
+.Admin {
+    margin: 0 auto;
+    padding-top: 50px;
+    font-family: 'Exo 2', sans-serif;
+}
+
+.table-container {
+    margin-top: 20px;
+	display: flex;
+	justify-content: center;
+}
+
+table {
+    max-width: 800px;
+    border-collapse: collapse;
+	margin: 0 auto;
+}
+
+th, td {
+    border: 1px solid #dddddd;
+    padding: 8px;
+    text-align: center;
+}
+
+th {
+	text-align: center;
+    background-color: #f2f2f2;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tr:hover {
+    background-color: #f2f2f2;
+}
+
+button {
+    display: inline-block;
+    padding: 10px 15px;
+    background-color: #00db33;
+    color: white;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0 10px;
+};
+
