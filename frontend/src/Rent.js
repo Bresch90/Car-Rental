@@ -9,6 +9,7 @@ const Rent = () => {
     const [minEndDate, setMinEndDate] = useState(new Date());
     const [maxEndDate, setMaxEndDate] = useState(new Date("2124-03-20"));
     const [dateToExcludeArray, setDateToExcludeArray] = useState([]);
+    const [datesToExcludeStartDates, setDatesToExcludeStartDates] = useState([]);
     const [ordersByCar, setOrdersByCar] = useState({});
     const [nextAvailableDate, setNextAvailableDate] = useState(new Date());
 
@@ -54,6 +55,7 @@ const Rent = () => {
         tomorrow.setDate(tomorrow.getDate() + 1);
         setMinEndDate(tomorrow);
         setEndDate(tomorrow);
+
     }, [nextAvailableDate]);
 
     // Effect for updating totalPrice
@@ -304,9 +306,9 @@ const Rent = () => {
                         <DatePicker id="returnDate" minDate={minEndDate} maxDate={maxEndDate} selected={endDate} onChange={(date) => setEndDate(date)} />
                     </div>
                 </div>
-                <input type="text" data-testid="driverName" value={formData.driverName} placeholder='Name of driver' onChange={nameValidation} maxLength={30} required></input>
+                <input type="text" data-testid="driverName" name='driverName' value={formData.driverName} placeholder='Name of driver' onChange={nameValidation} maxLength={30} required></input>
                 {nameError && <p className="error">{nameError}</p>}
-                <input type="number" data-testid='driverAge' value={formData.driverAge} placeholder='Age of driver' onChange={ageValidation} min={1} max={100} required></input>
+                <input type="number" data-testid='driverAge' name='driverAge' value={formData.driverAge} placeholder='Age of driver' onChange={ageValidation} min={1} max={100} required></input>
                 {ageError && <p className="error">{ageError}</p>}
                 <h2>Sum total = {formData.totalPrice.toLocaleString('sv-SE')} SEK</h2>
                 <button type="submit">Submit</button>
