@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BrowserRouter as Router } from 'react-router-dom'; // Import the Router
+import { BrowserRouter as Router } from 'react-router-dom';
 import Home from './Home';
 
 describe('Home component', () => {

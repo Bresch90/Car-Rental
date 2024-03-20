@@ -105,8 +105,8 @@ const Rent = () => {
         // Package order
         const order = {
             'car': formData.car,
-            'startDate': startDate.toLocaleDateString(),
-            'endDate': endDate.toLocaleDateString(),
+            'startDate': startDate.toISOString(),
+            'endDate': endDate.toISOString(),
             'driverName': formData.driverName,
             'driverAge': formData.driverAge,
             'totalPrice': formData.totalPrice
@@ -129,7 +129,8 @@ const Rent = () => {
                 }, 3000);
             } else {
                 const errorMessage = await response.text();
-                alert(`Failed to submit order. Please try again later.\n\n${errorMessage}`);
+                alert(`Failed to submit order. Please try again later.\n\n${JSON.stringify(order, null, 2)}`);
+                console.log(`Failed to submit order.\n${errorMessage}`);
             }
         } catch (error) {
             console.error('Error submitting order:', error);

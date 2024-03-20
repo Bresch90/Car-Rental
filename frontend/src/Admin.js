@@ -53,14 +53,11 @@ class Admin extends Component {
             });
             if (response.ok) {
                 console.log('All orders successfully deleted.');
-                // Optionally, you can perform any additional actions here after successful deletion
             } else {
                 console.error('Failed to delete orders.');
-                // Handle error condition if needed
             }
         } catch (error) {
             console.error('Error deleting orders:', error);
-            // Handle network or other errors if needed
         }
     }
 
