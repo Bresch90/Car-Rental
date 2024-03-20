@@ -56,6 +56,9 @@ const Rent = () => {
         setMinEndDate(tomorrow);
         setEndDate(tomorrow);
 
+// Quickfix to handle bugg where day before next intervall should not be pickable
+        updateDatesToExcludeStartDates()
+
     }, [nextAvailableDate]);
 
     // Effect for updating totalPrice
@@ -187,15 +190,26 @@ const Rent = () => {
 
     // Update maxEndDate
     const updateMaxEndDate = () => {
-        const localMaxEndDate = new Date("2100-01-01");
+        let localMaxEndDate = new Date("2100-01-01");
         for (let i = 0; i < dateToExcludeArray.length; i++) {
             const interval = dateToExcludeArray[i];
             if (startDate < interval.start) {
-                localMaxEndDate.setDate(interval.start);
+                localMaxEndDate = new Date(interval.start);
                 break;
             }
         }
         setMaxEndDate(localMaxEndDate);
+    }
+
+    // Had to make a new list because start of intervals should shift -1 on startDate
+    const updateDatesToExcludeStartDates = () => {
+        const localDatesToExcludeArray = [];
+        dateToExcludeArray.forEach(interval => {
+            const startDateMinusOne = new Date(interval.start);
+            startDateMinusOne.setDate(startDateMinusOne.getDate() - 1);
+            localDatesToExcludeArray.push({start: startDateMinusOne, end: new Date(interval.end)});
+        });
+        setDatesToExcludeStartDates(localDatesToExcludeArray);
     }
 
     // Update total price
@@ -263,11 +277,11 @@ const Rent = () => {
     // Calculate nextAvailableDate and maxEndDate based on datesToExclude
     const calculateNextAvailableDateAndMaxEnd = (localDatesToExcludeArray) => {
         let localNextAvailableDate = new Date();
-        const localMaxEndDate = new Date("2100-01-01");
+        let localMaxEndDate = new Date("2100-01-01");
         for (let i = 0; i < localDatesToExcludeArray.length; i++) {
             const interval = localDatesToExcludeArray[i];
             if (localNextAvailableDate < interval.start) {
-                localMaxEndDate.setDate(interval.start);
+                localMaxEndDate = new Date(interval.start);
                 break;
             }
             const newDay = new Date(interval.end);
@@ -299,7 +313,7 @@ const Rent = () => {
                 <div>
                     <div>
                         <label>Pick up date:</label>
-                        <DatePicker id="pickUpDate" minDate={new Date()} selected={startDate} onChange={handleStartDateChange} excludeDateIntervals={dateToExcludeArray} />
+                        <DatePicker id="pickUpDate" minDate={new Date()} selected={startDate} onChange={handleStartDateChange} excludeDateIntervals={datesToExcludeStartDates} />
                     </div>
                     <div>
                         <label>Return date: </label>
