@@ -1,13 +1,17 @@
 package com.example.rental;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.HashMap;
@@ -21,11 +25,30 @@ public class DbServiceTests {
     private DbService dbService;
     private Order defaultOrder;
 
+    private ByteArrayOutputStream outputStream;
+    private ByteArrayOutputStream errorStream;
+    private PrintStream originalOut;
+    private PrintStream originalErr;
+
     @BeforeEach
     void setUp() {
         jdbcTemplate = mock(JdbcTemplate.class);
         dbService = new DbService(jdbcTemplate);
         defaultOrder = createDefaultOrder();
+
+        // Capture OutputStream and errorStream to verify and suppress stacktrace
+        originalOut = System.out;
+        originalErr = System.err;
+        outputStream = new ByteArrayOutputStream();
+        errorStream = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outputStream));
+        System.setErr(new PrintStream(errorStream));
+    }
+
+    @AfterEach
+    void tearDown() {
+        System.setOut(originalOut);
+        System.setErr(originalErr);
     }
 
     private Order createDefaultOrder() {
@@ -62,6 +85,7 @@ public class DbServiceTests {
         when(jdbcTemplate.queryForList(anyString())).thenThrow(new DataAccessException("Test exception") {});
         List<Map<String, Object>> orders = dbService.getOrdersFromDatabase();
         assertTrue(orders.isEmpty());
+        assertThat(errorStream.toString()).contains(": Test exception");
     }
 
     @Test
@@ -85,6 +109,7 @@ public class DbServiceTests {
                 .thenThrow(new DataAccessException("Test exception") {});
 
         assertFalse(dbService.saveOrder(defaultOrder));
+        assertThat(errorStream.toString()).contains(": Test exception");
     }
 
     @Test
@@ -96,5 +121,40 @@ public class DbServiceTests {
     void testDeleteAllOrders_Failure() {
         when(jdbcTemplate.update(anyString())).thenThrow(new DataAccessException("Test exception") {});
         assertFalse(dbService.deleteAllOrders());
+        assertThat(errorStream.toString()).contains(": Test exception");
     }
+
+    @Test
+    void testCreateDatabaseTableOrders_NoTable() {
+        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class))).thenReturn(0);
+        dbService.createDatabaseTableOrders();
+
+        assertTrue(outputStream.toString().contains("*************Created 'orders' table in the database!*************"));
+    }
+
+    @Test
+    void testCreateDatabaseTableOrders_NoReturn() {
+        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class))).thenReturn(null);
+        dbService.createDatabaseTableOrders();
+
+        assertThat(outputStream.toString()).contains("*************Created 'orders' table in the database!*************");
+    }
+
+    @Test
+    void testCreateDatabaseTableOrders_TableExists() {
+        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class))).thenReturn(1);
+        dbService.createDatabaseTableOrders();
+
+        assertThat(outputStream.toString()).doesNotContain("*************Created 'orders' table in the database!*************");
+    }
+
+    @Test
+    void testCreateDatabaseTableOrders_Error() {
+        when(jdbcTemplate.update(anyString())).thenThrow(new DataAccessException("Test exception") {});
+        dbService.createDatabaseTableOrders();
+
+        assertThat(outputStream.toString()).contains("Error initializing database: Test exception");
+        assertThat(errorStream.toString()).contains(": Test exception");
+    }
+
 }
