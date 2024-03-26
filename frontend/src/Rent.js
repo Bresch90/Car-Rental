@@ -7,9 +7,19 @@ const Rent = () => {
     const [startDate, setStartDate] = useState(new Date());
     const [endDate, setEndDate] = useState(new Date());
     const [minEndDate, setMinEndDate] = useState(new Date());
-    const [maxEndDate, setMaxEndDate] = useState(new Date("2124-03-20"));
-    const [dateToExcludeArray, setDateToExcludeArray] = useState([]);
-    const [datesToExcludeStartDates, setDatesToExcludeStartDates] = useState([]);
+    const [maxEndDate, setMaxEndDate] = useState(new Date("2090-02-11"));
+    const [datesBlacklistByCar, setDatesBlacklistByCar] = useState({
+            "Volkswagen Golf, 1333kr/day": [],
+            "Volvo S60, 1500 kr/day": [],
+            "Ford Transit, 2400kr/day": [],
+            "Ford Mustang, 3000kr/day": []
+        });
+    const [datesBlacklistByCarStartDates, setDatesBlacklistByCarStartDates] = useState({
+            "Volkswagen Golf, 1333kr/day": [],
+            "Volvo S60, 1500 kr/day": [],
+            "Ford Transit, 2400kr/day": [],
+            "Ford Mustang, 3000kr/day": []
+        });    
     const [ordersByCar, setOrdersByCar] = useState({});
     const [nextAvailableDate, setNextAvailableDate] = useState(new Date());
 
@@ -17,6 +27,7 @@ const Rent = () => {
     const [ageError, setAgeError] = useState('');
     const [databaseError, setDatabaseError] = useState('');
     const [orderState, setOrderState] = useState('');
+    const [submitInProgress, setSubmitInProgress] = useState(false);
 
     const [formData, setFormData] = useState({
         car: 'Volkswagen Golf, 1333kr/day',
@@ -32,7 +43,10 @@ const Rent = () => {
 
     // Effect for updating datesToExclude when ordersByCar changes
     useEffect(() => {
-        datesToExclude();
+        const localBlacklist = calculateBlacklistByCar();
+        calculateNextAvailableDateAndMaxEnd(localBlacklist);
+        // Quickfix to handle bugg where day before next intervall should not be pickable
+        calculateDatesBlacklistByCarStartDates(localBlacklist)
     }, [ordersByCar]);
     
     // Effect for updating minEndDate and endDate when startDate changes
@@ -41,11 +55,12 @@ const Rent = () => {
         const tomorrow = new Date(startDate);
         tomorrow.setDate(tomorrow.getDate() + 1);
         setEndDate(tomorrow);
+        setMinEndDate(new Date(tomorrow))
     }, [startDate]);
 
-    // Effect for updating datesToExclude when car selection changes
+    // Effect for updating NextAvailableDate And MaxEnd when car selection changes
     useEffect(() => {
-        datesToExclude();
+        calculateNextAvailableDateAndMaxEnd(datesBlacklistByCar);
     }, [formData.car]);
     
     // Effect for updating dates when nextAvailableDate changes
@@ -55,10 +70,6 @@ const Rent = () => {
         tomorrow.setDate(tomorrow.getDate() + 1);
         setMinEndDate(tomorrow);
         setEndDate(tomorrow);
-
-// Quickfix to handle bugg where day before next intervall should not be pickable
-        updateDatesToExcludeStartDates()
-
     }, [nextAvailableDate]);
 
     // Effect for updating totalPrice
@@ -96,9 +107,13 @@ const Rent = () => {
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!submitInProgress) {
+            setSubmitInProgress(true);
+        }
         // Tell the user to fix the displayed errors
         if (nameError || ageError || databaseError) {
             alert('Please correct the errors before submitting.');
+            setSubmitInProgress(false);
             return;
         }
 
@@ -129,12 +144,14 @@ const Rent = () => {
                 }, 3000);
             } else {
                 const errorMessage = await response.text();
-                alert(`Failed to submit order. Please try again later.\n\n${JSON.stringify(order, null, 2)}`);
+                alert(`Failed to submit order. Please try again later.\n${JSON.stringify(order, null, 2)}`);
                 console.log(`Failed to submit order.\n${errorMessage}`);
+                setSubmitInProgress(false);
             }
         } catch (error) {
             console.error('Error submitting order:', error);
             alert('An error occurred while submitting the order. Please try again later.');
+            setSubmitInProgress(false);
         }
     }
 
@@ -181,19 +198,13 @@ const Rent = () => {
     // Handle start date change
     const handleStartDateChange = (date) => {
         setStartDate(date);
-        const tomorrow = new Date(date);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        setMinEndDate(new Date(tomorrow))
-        if (date.getDate() >= endDate.getDate()) {
-            setEndDate(tomorrow);
-        }
     }
 
     // Update maxEndDate
     const updateMaxEndDate = () => {
         let localMaxEndDate = new Date("2100-01-01");
-        for (let i = 0; i < dateToExcludeArray.length; i++) {
-            const interval = dateToExcludeArray[i];
+        for (let i = 0; i < datesBlacklistByCar[formData.car].length; i++) {
+            const interval = datesBlacklistByCar[formData.car][i];
             if (startDate < interval.start) {
                 localMaxEndDate = new Date(interval.start);
                 break;
@@ -203,14 +214,18 @@ const Rent = () => {
     }
 
     // Had to make a new list because start of intervals should shift -1 on startDate
-    const updateDatesToExcludeStartDates = () => {
-        const localDatesToExcludeArray = [];
-        dateToExcludeArray.forEach(interval => {
-            const startDateMinusOne = new Date(interval.start);
-            startDateMinusOne.setDate(startDateMinusOne.getDate() - 1);
-            localDatesToExcludeArray.push({start: startDateMinusOne, end: new Date(interval.end)});
+    const calculateDatesBlacklistByCarStartDates = (localBlacklist) => {
+        const localBlacklistStartDates = JSON.parse(JSON.stringify(datesBlacklistByCarStartDates));
+        Object.keys(localBlacklist).forEach((car) => {
+            const localDatesToExcludeArray = [];
+            localBlacklist[car].forEach(interval => {
+                const startDateMinusOne = new Date(interval.start);
+                startDateMinusOne.setDate(startDateMinusOne.getDate() - 1);
+                localDatesToExcludeArray.push({start: startDateMinusOne, end: new Date(interval.end)});
+            });
+            localBlacklistStartDates[car] = localDatesToExcludeArray;
         });
-        setDatesToExcludeStartDates(localDatesToExcludeArray);
+        setDatesBlacklistByCarStartDates(localBlacklistStartDates);
     }
 
     // Update total price
@@ -239,48 +254,46 @@ const Rent = () => {
         });
     }
 
-    // Calculate datesToExclude and nextAvailableDate
-    const datesToExclude = async () => {
-        const LocalDatesToExcludeArray = calculateDatesToExclude();
-        // calculateNextAvailableDateAndMaxEnd also checks if today needs to be excluded
-        calculateNextAvailableDateAndMaxEnd(LocalDatesToExcludeArray);
-    }
+    // Calculate datesToExclude from orders based
+    const calculateBlacklistByCar = () => {
+        const localBlacklist = JSON.parse(JSON.stringify(datesBlacklistByCar))
 
-    // Calculate datesToExclude from orders based on selected car
-    const calculateDatesToExclude = () => {
-        if (!ordersByCar[formData.car]) {
-            setDateToExcludeArray([]);
-            return [];
-        }
-        // Get only dates from matching car
-        const LocalDatesToExcludeArray = [];
-        ordersByCar[formData.car].forEach(dateDict => {
-            var includeStartDate = new Date(dateDict.start_date);
-            includeStartDate.setDate(includeStartDate.getDate() - 1);
-            LocalDatesToExcludeArray.push({ start: new Date(includeStartDate), end: new Date(dateDict.end_date) });
-        });
-
-        // If only one date is available between two intervals, fill it.
-        // Not possible to pick up and return on one day.
-        LocalDatesToExcludeArray.sort((a, b) => a.start - b.start);
-        for (let i = 0; i < LocalDatesToExcludeArray.length - 1; i++) {
-            const currentInterval = LocalDatesToExcludeArray[i];
-            const nextInterval = LocalDatesToExcludeArray[i + 1];
-            const daysGap = (nextInterval.start - currentInterval.end) / (1000 * 60 * 60 * 24);
-            if (daysGap === 1) {
-                currentInterval.end.setDate(currentInterval.end.getDate() + 1);
+        Object.keys(localBlacklist).forEach((car) => {
+            // Get only dates from matching car
+            if (!ordersByCar[car]) {
+                localBlacklist[car] = [];
+                return;
             }
-        }
-        setDateToExcludeArray(LocalDatesToExcludeArray);
-        return LocalDatesToExcludeArray;
+            const localDatesToExcludeArray = [];
+            ordersByCar[car].forEach(dateDict => {
+                var includeStartDate = new Date(dateDict.start_date);
+                includeStartDate.setDate(includeStartDate.getDate() - 1);
+                localDatesToExcludeArray.push({ start: new Date(includeStartDate), end: new Date(dateDict.end_date) });
+            });
+
+            // If only one date is available between two intervals, fill it.
+            // Not possible to pick up and return on one day.
+            localDatesToExcludeArray.sort((a, b) => a.start - b.start);
+            for (let i = 0; i < localDatesToExcludeArray.length - 1; i++) {
+                const currentInterval = localDatesToExcludeArray[i];
+                const nextInterval = localDatesToExcludeArray[i + 1];
+                const daysGap = (nextInterval.start - currentInterval.end) / (1000 * 60 * 60 * 24);
+                if (daysGap === 1) {
+                    currentInterval.end.setDate(currentInterval.end.getDate() + 1);
+                }
+            }
+            localBlacklist[car] = localDatesToExcludeArray;
+        });
+        setDatesBlacklistByCar(localBlacklist);
+        return localBlacklist;
     }
 
     // Calculate nextAvailableDate and maxEndDate based on datesToExclude
     const calculateNextAvailableDateAndMaxEnd = (localDatesToExcludeArray) => {
         let localNextAvailableDate = new Date();
         let localMaxEndDate = new Date("2100-01-01");
-        for (let i = 0; i < localDatesToExcludeArray.length; i++) {
-            const interval = localDatesToExcludeArray[i];
+        for (let i = 0; i < localDatesToExcludeArray[formData.car].length; i++) {
+            const interval = localDatesToExcludeArray[formData.car][i];
             if (localNextAvailableDate < interval.start) {
                 localMaxEndDate = new Date(interval.start);
                 break;
@@ -291,21 +304,13 @@ const Rent = () => {
         }
         setNextAvailableDate(localNextAvailableDate);
         setMaxEndDate(localMaxEndDate);
-
-        //Also checks if today needs to be excluded...
-        const yesterDay = new Date();
-        if (yesterDay.getDate() !== localNextAvailableDate.getDate()) {
-            yesterDay.setDate(yesterDay.getDate() - 1);
-            localDatesToExcludeArray.push({ start: yesterDay, end: new Date() });
-            setDateToExcludeArray(localDatesToExcludeArray);
-        }
     }
 
     return (
         <div className='Rent'>
             <form onSubmit={handleSubmit}>
                 <h1>Rent a car!</h1>
-                <select name="car" onChange={handleCarChange}>
+                <select data-testid="car-selector" name="car" onChange={handleCarChange}>
                     <option value="Volkswagen Golf, 1333kr/day">Volkswagen Golf, 1333kr/day</option>
                     <option value="Volvo S60, 1500 kr/day">Volvo S60, 1500 kr/day</option>
                     <option value="Ford Transit, 2400kr/day">Ford Transit, 2400kr/day</option>
@@ -314,7 +319,7 @@ const Rent = () => {
                 <div>
                     <div>
                         <label>Pick up date:</label>
-                        <DatePicker id="pickUpDate" minDate={new Date()} selected={startDate} onChange={handleStartDateChange} excludeDateIntervals={datesToExcludeStartDates} />
+                        <DatePicker id="pickUpDate" minDate={new Date()} selected={startDate} onChange={handleStartDateChange} excludeDateIntervals={datesBlacklistByCarStartDates[formData.car]} />
                     </div>
                     <div>
                         <label>Return date: </label>
@@ -326,7 +331,7 @@ const Rent = () => {
                 <input type="number" data-testid='driverAge' name='driverAge' value={formData.driverAge} placeholder='Age of driver' onChange={ageValidation} min={1} max={100} required></input>
                 {ageError && <p className="error">{ageError}</p>}
                 <h2>Sum total = {formData.totalPrice.toLocaleString('sv-SE')} SEK</h2>
-                <button type="submit">Submit</button>
+                <button type="submit" disabled={submitInProgress}>Submit</button>
             </form>
             {orderState && <h3>Order submitted successfully!</h3>}
             {databaseError && <h3 style={{color: 'red'}}>{databaseError}</h3>}
