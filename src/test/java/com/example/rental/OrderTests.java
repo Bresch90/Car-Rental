@@ -176,6 +176,39 @@ class OrderTests {
     }
 
     @Test
+    void testValidation_ValidCar_Golf() {
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(3);
+        Order order = new Order("Volkswagen Golf, 1333kr/day", startDate, endDate,
+                "Sven", 55, 3999.0);
+
+        String validationResult = order.validate();
+        assertTrue(validationResult.isEmpty());
+    }
+
+    @Test
+    void testValidation_ValidCar_Transit() {
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(3);
+        Order order = new Order("Ford Transit, 2400kr/day", startDate, endDate,
+                "Sven", 55, 7200.0);
+
+        String validationResult = order.validate();
+        assertTrue(validationResult.isEmpty());
+    }
+
+    @Test
+    void testValidation_ValidCar_Mustang() {
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(3);
+        Order order = new Order("Ford Mustang, 3000kr/day", startDate, endDate,
+                "Sven", 55, 9000.0);
+
+        String validationResult = order.validate();
+        assertTrue(validationResult.isEmpty());
+    }
+
+    @Test
     void testValidation_PriceMismatch_High() {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = LocalDate.now().plusDays(3);
@@ -195,6 +228,17 @@ class OrderTests {
 
         String validationResult = order.validate();
         assertEquals("Difference in calculated price and price given from frontend!", validationResult);
+    }
+
+    @Test
+    void testValidation_PriceMismatch_Rounding() {
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(3);
+        Order order = new Order("Volvo S60, 1500 kr/day", startDate, endDate,
+                "Sven", 55, 4500.4);
+
+        String validationResult = order.validate();
+        assertTrue(validationResult.isEmpty());
     }
 
 
