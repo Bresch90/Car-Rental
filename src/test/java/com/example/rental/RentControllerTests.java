@@ -75,6 +75,7 @@ class RentControllerTests {
 
     @Test
     void testReceiveOrder_ValidOrder() throws Exception {
+        when(dbService.isDateFree(any(Order.class))).thenReturn("");
         when(dbService.saveOrder(any(Order.class))).thenReturn(true);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/rent/order")
@@ -127,7 +128,19 @@ class RentControllerTests {
     }
 
     @Test
+    void testReceiveOrder_DateAlreadyBooked() throws Exception {
+        when(dbService.isDateFree(any(Order.class))).thenReturn("Car is already booked that date!");
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/rent/order")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(defaultOrder.toJson()))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Failed to save order: Car is already booked that date!"));
+    }
+
+    @Test
     void testReceiveOrder_FailedToSave() throws Exception {
+        when(dbService.isDateFree(any(Order.class))).thenReturn("");
         when(dbService.saveOrder(defaultOrder)).thenReturn(false);
 
         mockMvc.perform(post("/rent/order")

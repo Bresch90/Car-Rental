@@ -10,6 +10,7 @@ public class Order {
     private String driverName;
     private Integer driverAge;
     private Double totalPrice;
+    private DbService dbService;
 
     public Order() {
     }
@@ -97,7 +98,7 @@ public class Order {
             return "Car is required!";
         }
 
-        int carPrice = 0;
+        int carPrice;
         switch (this.car) {
             case "Volkswagen Golf, 1333kr/day":
                 carPrice = 1333;

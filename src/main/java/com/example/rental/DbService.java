@@ -1,11 +1,11 @@
 package com.example.rental;
 
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +86,39 @@ public class DbService {
             System.out.println("Error deleting orders from the database: " + e.getMessage());
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public String isDateFree(Order order) {
+        try {
+            String sql ="SELECT * FROM orders " +
+                        "WHERE car = ? " +
+                        "AND (" +
+                            "(start_date <= ? AND end_date >= ?) " +
+                            "OR " +
+                            "(start_date <= ? AND end_date >= ?)" +
+                        ")";
+
+            // with test data in database, (same as in the frontend tests)
+            // correct, 0 rows
+            // SELECT * FROM orders WHERE car = 'Volkswagen Golf, 1333kr/day' AND ((start_date <= '2024-04-28' AND end_date >= '2024-04-28') OR (start_date <= '2024-04-29' AND end_date >= '2024-04-29'));
+
+            // invalid start, 1 row
+            // SELECT * FROM orders WHERE car = 'Volkswagen Golf, 1333kr/day' AND ((start_date <= '2024-04-27' AND end_date >= '2024-04-27') OR (start_date <= '2024-04-29' AND end_date >= '2024-04-29'));
+
+            // invalid end, 1 row
+            // SELECT * FROM orders WHERE car = 'Volkswagen Golf, 1333kr/day' AND ((start_date <= '2024-04-28' AND end_date >= '2024-04-28') OR (start_date <= '2024-04-30' AND end_date >= '2024-04-30'));
+            LocalDate start_date = order.getStartDate();
+            LocalDate end_date = order.getEndDate();
+            if (db.queryForList(sql, order.getCar(), start_date, start_date, end_date, end_date).isEmpty()) {
+                return "";
+            } else {
+                return "Car is already booked that date!";
+            }
+        } catch (DataAccessException e) {
+            System.out.println("Error getting database: " + e.getMessage());
+            e.printStackTrace();
+            return "Database error when validating date.";
         }
     }
 }

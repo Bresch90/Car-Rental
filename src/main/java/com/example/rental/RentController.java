@@ -28,7 +28,13 @@ public class RentController {
 
 	@PostMapping("/order")
 	public ResponseEntity<String> receiveOrder(@RequestBody Order order) {
-			String validationResult = order.validate();
+			String validationResult;
+
+			validationResult = order.validate();
+			if (validationResult.isEmpty()) {
+				validationResult = dbService.isDateFree(order);
+			}
+
 			if (!validationResult.isEmpty()) {
 				System.out.println("Order is invalid, got: \"" + validationResult + "\"");
 				System.out.println("Scrapping order.");

@@ -95,17 +95,13 @@ public class DbServiceTests {
 
     @Test
     void testSaveOrder_Failure() {
-        String sql = "INSERT INTO orders " +
-                "(car, start_date, end_date, driver_name, driver_age, total_price) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
-
-        when(jdbcTemplate.update(sql,
-                defaultOrder.getCar(),
-                defaultOrder.getStartDate(),
-                defaultOrder.getEndDate(),
-                defaultOrder.getDriverName(),
-                defaultOrder.getDriverAge(),
-                defaultOrder.getTotalPrice()))
+        when(jdbcTemplate.update(anyString(),
+                anyString(),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                anyString(),
+                anyInt(),
+                anyDouble()))
                 .thenThrow(new DataAccessException("Test exception") {});
 
         assertFalse(dbService.saveOrder(defaultOrder));
@@ -156,5 +152,57 @@ public class DbServiceTests {
         assertThat(outputStream.toString()).contains("Error initializing database: Test exception");
         assertThat(errorStream.toString()).contains(": Test exception");
     }
+
+    @Test
+    void testIsDateFree_Successful() {
+        when(jdbcTemplate.queryForList(
+                anyString(),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                any(LocalDate.class)
+        )).thenReturn(Collections.emptyList());
+
+        String result = dbService.isDateFree(defaultOrder);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void testIsDateFree_Failure() {
+        when(jdbcTemplate.queryForList(
+                anyString(),
+                anyString(),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                any(LocalDate.class)
+        )).thenAnswer( invocation -> {
+            List<Map<String, Object>> resultList = new ArrayList<>();
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("test", defaultOrder);
+            resultList.add(resultMap);
+            return resultList;
+        });
+        String result = dbService.isDateFree(defaultOrder);
+        assertThat(result).contains("Car is already booked that date!");
+        assertThat(errorStream.toString()).doesNotContain(": Test exception");
+    }
+
+    @Test
+    void testIsDateFree_Error() {
+        when(jdbcTemplate.queryForList(
+                anyString(),
+                anyString(),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                any(LocalDate.class)
+        )).thenThrow(new DataAccessException("Test exception") {});
+
+        String result = dbService.isDateFree(defaultOrder);
+        assertThat(result).contains("Database error when validating date.");
+        assertThat(errorStream.toString()).contains(": Test exception");
+    }
+
 
 }
