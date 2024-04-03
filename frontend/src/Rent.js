@@ -91,11 +91,11 @@ const Rent = () => {
         try {
             const response = await fetch('/rent/getorders');
             if (!response.ok) {
-                throw new Error('Failed to fetch orders');
+                throw new Error(`${response.status}`);
             }
             const orders = await response.json();
             if (orders.length === 0) {
-                console.log("Got no orders from database, are you sure it is running?");
+                console.log("Got no orders from database.\nThis is normal if the database is empty.");
             }
             const localOrdersByCar = {};
             orders.forEach(order => {
@@ -105,9 +105,13 @@ const Rent = () => {
             });
             setOrdersByCar(localOrdersByCar);
         } catch (error) {
-            console.error('Error fetching orders:', error);
-            setDatabaseError('No connection to database.');
-            alert("Error connecting to database!\nMake sure it is running!");
+            if (error.message.includes("500")) {
+                setStatus({...status, databaseError: 'No connection to server.'})
+                alert(`Error connecting to backend!\nMake sure it is running!`);
+            } else if (error.message.includes("503")) {
+                setStatus({...status, databaseError: 'No connection to database.'})
+                alert(`Error connecting to database!\nMake sure it is running!`);
+            }
             return;
         }
         setStatus({...status, databaseError: ''})

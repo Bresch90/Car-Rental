@@ -22,8 +22,12 @@ public class RentController {
 	}
 
 	@GetMapping("/getorders")
-	public List<Map<String, Object>> getOrders() {
-		return dbService.getOrdersFromDatabase();
+	public ResponseEntity<List<Map<String, Object>>> getOrders() {
+		List<Map<String, Object>> orders = dbService.getOrdersFromDatabase();
+		if (orders == null) {
+			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(null);
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(orders);
 	}
 
 	@PostMapping("/order")

@@ -50,7 +50,7 @@ public class DbService {
         } catch (DataAccessException e) {
             System.out.println("Error getting database: " + e.getMessage());
             e.printStackTrace();
-            return Collections.emptyList();
+            return null;
         }
     }
 
