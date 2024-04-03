@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import DatePicker from "react-datepicker";
-import { calculateBlacklistByCar, calculateStartDatesBlacklistByCar, calculateNextAvailableDateAndMaxEnd, calculateTotalPrice } from './RentHelper';
+import { calculateBlacklistByCar, calculateStartDatesBlacklistByCar, calculateNextAvailableDateAndMaxEnd, calculateTotalPrice } from '../Helpers/RentHelper';
 import "react-datepicker/dist/react-datepicker.css";
-import './Rent.css';
+import '../Css/Rent.css';
 
 const Rent = () => {
     const [startDate, setStartDate] = useState(new Date());

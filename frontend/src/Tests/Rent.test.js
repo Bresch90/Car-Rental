@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import Rent from './Rent';
+import Rent from '../Components/Rent';
 import { advanceTo, clear } from 'jest-date-mock';
 
 describe('Rent component', () => {

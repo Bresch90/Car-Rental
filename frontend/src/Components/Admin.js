@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './Admin.css';
+import '../Css/Admin.css';
 
 const Admin = () => {
     const [ordersById, setOrdersById] = useState("");

@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter as Router } from 'react-router-dom';
-import Home from './Home';
+import Home from '../Components/Home';
 
 describe('Home component', () => {
   beforeEach(() => {
