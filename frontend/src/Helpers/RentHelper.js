@@ -68,31 +68,18 @@ const calculateNextAvailableDateAndMaxEnd = (datesBlacklistByCar, car) => {
     // setMaxEndDate(localMaxEndDate);
 }
 
-// // Update maxEndDate
-// const calculateMaxEndDate = (datesBlacklistByCar, car) => {
-//     let localMaxEndDate = new Date("2100-01-01");
-//     for (let i = 0; i < datesBlacklistByCar[car].length; i++) {
-//         const interval = datesBlacklistByCar[car][i];
-//         if (startDate < interval.start) {
-//             localMaxEndDate = new Date(interval.start);
-//             break;
-//         }
-//     }
-//     return localMaxEndDate;
-// }
-
-//  // ORg maxEndDate
-//  const updateMaxEndDate = () => {
-//     let localMaxEndDate = new Date("2100-01-01");
-//     for (let i = 0; i < datesBlacklistByCar[formData.car].length; i++) {
-//         const interval = datesBlacklistByCar[formData.car][i];
-//         if (startDate < interval.start) {
-//             localMaxEndDate = new Date(interval.start);
-//             break;
-//         }
-//     }
-//     setMaxEndDate(localMaxEndDate);
-// }
+// Update maxEndDate
+const calculateMaxEndDate = (datesBlacklistByCar, car, startDate) => {
+    let localMaxEndDate = new Date("2100-01-01");
+    for (let i = 0; i < datesBlacklistByCar[car].length; i++) {
+        const interval = datesBlacklistByCar[car][i];
+        if (startDate < interval.start) {
+            localMaxEndDate = new Date(interval.start);
+            break;
+        }
+    }
+    return localMaxEndDate;
+}
 
 // Update total price
 const calculateTotalPrice = (car, startDate, endDate) => {
@@ -113,5 +100,4 @@ const calculateTotalPrice = (car, startDate, endDate) => {
     }
     return numberOfDays * carPrice;
 }
-    // calculateMaxEndDate,
-export { calculateBlacklistByCar, calculateStartDatesBlacklistByCar, calculateNextAvailableDateAndMaxEnd, calculateTotalPrice };
+export { calculateBlacklistByCar, calculateStartDatesBlacklistByCar, calculateNextAvailableDateAndMaxEnd, calculateMaxEndDate, calculateTotalPrice };

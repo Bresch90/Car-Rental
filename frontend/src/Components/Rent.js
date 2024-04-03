@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import DatePicker from "react-datepicker";
-import { calculateBlacklistByCar, calculateStartDatesBlacklistByCar, calculateNextAvailableDateAndMaxEnd, calculateTotalPrice } from '../Helpers/RentHelper';
+import { calculateBlacklistByCar,
+        calculateStartDatesBlacklistByCar,
+        calculateNextAvailableDateAndMaxEnd,
+        calculateTotalPrice,
+        calculateMaxEndDate,
+    } from '../Helpers/RentHelper';
 import "react-datepicker/dist/react-datepicker.css";
 import '../Css/Rent.css';
 
@@ -57,7 +62,7 @@ const Rent = () => {
     
     // Effect for updating minEndDate and endDate when startDate changes
     useEffect(() => {
-        updateMaxEndDate();
+        setMaxEndDate(calculateMaxEndDate(datesBlacklistByCar, formData.car, startDate));
         const tomorrow = new Date(startDate);
         tomorrow.setDate(tomorrow.getDate() + 1);
         setEndDate(tomorrow);
@@ -209,19 +214,6 @@ const Rent = () => {
     // Handle start date change
     const handleStartDateChange = (date) => {
         setStartDate(date);
-    }
-
-    // Update maxEndDate
-    const updateMaxEndDate = () => {
-        let localMaxEndDate = new Date("2100-01-01");
-        for (let i = 0; i < datesBlacklistByCar[formData.car].length; i++) {
-            const interval = datesBlacklistByCar[formData.car][i];
-            if (startDate < interval.start) {
-                localMaxEndDate = new Date(interval.start);
-                break;
-            }
-        }
-        setMaxEndDate(localMaxEndDate);
     }
 
     return (
