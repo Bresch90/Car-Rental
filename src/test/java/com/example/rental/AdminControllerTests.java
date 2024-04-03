@@ -42,7 +42,7 @@ class AdminControllerTests {
         List<Map<String, Object>> expectedOrders = Collections.emptyList();
         when(dbService.getOrdersFromDatabase()).thenReturn(expectedOrders);
 
-        List<Map<String, Object>> actualOrders = adminController.getOrders();
+        List<Map<String, Object>> actualOrders = adminController.getOrders().getBody();
 
         verify(dbService).getOrdersFromDatabase();
 
@@ -54,7 +54,7 @@ class AdminControllerTests {
         List<Map<String, Object>> expectedOrders = Collections.emptyList();
         when(dbService.getOrdersFromDatabase()).thenReturn(expectedOrders);
 
-        List<Map<String, Object>> actualOrders = adminController.getOrders();
+        List<Map<String, Object>> actualOrders = adminController.getOrders().getBody();
 
         verify(dbService).getOrdersFromDatabase();
 
