@@ -6,7 +6,7 @@ import App from './App';
 describe('App component', () => {
   test('renders top bar with correct text', () => {
     render(<App />);
-    const topBarElement = screen.getByText(/Fortnox/i);
+    const topBarElement = screen.getByText(/Car rental/i);
     expect(topBarElement).toBeInTheDocument();
   });
 

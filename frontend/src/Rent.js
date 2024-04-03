@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DatePicker from "react-datepicker";
+import { calculateBlacklistByCar, calculateStartDatesBlacklistByCar, calculateNextAvailableDateAndMaxEnd, calculateTotalPrice } from './RentHelper';
 import "react-datepicker/dist/react-datepicker.css";
 import './Rent.css';
 
@@ -14,7 +15,7 @@ const Rent = () => {
             "Ford Transit, 2400kr/day": [],
             "Ford Mustang, 3000kr/day": []
         });
-    const [datesBlacklistByCarStartDates, setDatesBlacklistByCarStartDates] = useState({
+    const [startDatesBlacklistByCar, setStartDatesBlacklistByCar] = useState({
             "Volkswagen Golf, 1333kr/day": [],
             "Volvo S60, 1500 kr/day": [],
             "Ford Transit, 2400kr/day": [],
@@ -23,11 +24,13 @@ const Rent = () => {
     const [ordersByCar, setOrdersByCar] = useState({});
     const [nextAvailableDate, setNextAvailableDate] = useState(new Date());
 
-    const [nameError, setNameError] = useState('');
-    const [ageError, setAgeError] = useState('');
-    const [databaseError, setDatabaseError] = useState('');
-    const [orderState, setOrderState] = useState('');
-    const [submitInProgress, setSubmitInProgress] = useState(false);
+    const [status, setStatus] = useState({
+        nameError: '',
+        ageError: '',
+        databaseError: '',
+        orderState: '',
+        submitInProgress: false,
+    })
 
     const [formData, setFormData] = useState({
         car: 'Volkswagen Golf, 1333kr/day',
@@ -41,12 +44,15 @@ const Rent = () => {
         getOrders()
     }, []);
 
-    // Effect for updating datesToExclude when ordersByCar changes
+    // Effect for updating datesBlacklist and also set start values for dates when ordersByCar changes
     useEffect(() => {
-        const localBlacklist = calculateBlacklistByCar();
-        calculateNextAvailableDateAndMaxEnd(localBlacklist);
+        const localBlacklistByCar = calculateBlacklistByCar(datesBlacklistByCar, ordersByCar);
+        setDatesBlacklistByCar(localBlacklistByCar);
+        const {localNextAvailableDate, localMaxEndDate} = calculateNextAvailableDateAndMaxEnd(localBlacklistByCar, formData.car);
+        setNextAvailableDate(localNextAvailableDate);
+        setMaxEndDate(localMaxEndDate);
         // Quickfix to handle bugg where day before next intervall should not be pickable
-        calculateDatesBlacklistByCarStartDates(localBlacklist)
+        setStartDatesBlacklistByCar(calculateStartDatesBlacklistByCar(localBlacklistByCar, startDatesBlacklistByCar))
     }, [ordersByCar]);
     
     // Effect for updating minEndDate and endDate when startDate changes
@@ -60,7 +66,9 @@ const Rent = () => {
 
     // Effect for updating NextAvailableDate And MaxEnd when car selection changes
     useEffect(() => {
-        calculateNextAvailableDateAndMaxEnd(datesBlacklistByCar);
+        const {localNextAvailableDate, localMaxEndDate} = calculateNextAvailableDateAndMaxEnd(datesBlacklistByCar, formData.car);
+        setNextAvailableDate(localNextAvailableDate);
+        setMaxEndDate(localMaxEndDate);
     }, [formData.car]);
     
     // Effect for updating dates when nextAvailableDate changes
@@ -74,7 +82,8 @@ const Rent = () => {
 
     // Effect for updating totalPrice
     useEffect(() => {
-        priceUpdate();
+        const newTotalPrice = calculateTotalPrice(formData.car, startDate, endDate);
+        setFormData({...formData, totalPrice: newTotalPrice});
     }, [startDate, endDate, formData.car]);
 
     // Fetch orders from the server
@@ -101,19 +110,19 @@ const Rent = () => {
             alert("Error connecting to database!\nMake sure it is running!");
             return;
         }
-        setDatabaseError("")        
+        setStatus({...status, databaseError: ''})
     };
 
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!submitInProgress) {
-            setSubmitInProgress(true);
+        if (!status.submitInProgress) {
+            setStatus({...status, submitInProgress: true});
         }
         // Tell the user to fix the displayed errors
-        if (nameError || ageError || databaseError) {
+        if (status.nameError || status.ageError || status.databaseError) {
             alert('Please correct the errors before submitting.');
-            setSubmitInProgress(false);
+            setStatus({...status, submitInProgress: false});
             return;
         }
 
@@ -138,7 +147,7 @@ const Rent = () => {
             });
 
             if (response.ok) {
-                setOrderState('Success');
+                setStatus({...status, orderState: 'Order submitted successfully!'})
                 setTimeout(() => {
                     window.location.reload();
                 }, 3000);
@@ -146,12 +155,12 @@ const Rent = () => {
                 const errorMessage = await response.text();
                 alert(`Failed to submit order. Please try again later.\n${JSON.stringify(order, null, 2)}`);
                 console.log(`Failed to submit order.\n${errorMessage}`);
-                setSubmitInProgress(false);
+                setStatus({...status, submitInProgress: false});
             }
         } catch (error) {
             console.error('Error submitting order:', error);
             alert('An error occurred while submitting the order. Please try again later.');
-            setSubmitInProgress(false);
+            setStatus({...status, submitInProgress: false});
         }
     }
 
@@ -159,28 +168,26 @@ const Rent = () => {
     const nameValidation = (e) => {
         const { name, value } = e.target;
         if (!value.length) {
-            setNameError('Name is required!')
+            setStatus({...status, nameError: 'Name is required!'})
         } else if (!/^[a-zåäöA-ZÅÄÖ]+(\s[a-zåäöA-ZÅÄÖ]+)?$/.test(value)) {
-            setNameError('Invalid name. Only letters and one spaces allowed.')
+            setStatus({...status, nameError: 'Invalid name. Only letters and one spaces allowed.'})
         } else if (value.length >= 30) {
-            setNameError('Max name length is 30 characters.')
+            setStatus({...status, nameError: 'Max name length is 30 characters.'})
         } else {
-            setNameError('')
+            setStatus({...status, nameError: ''})
         }
-        setFormData({
-            ...formData, [name]: value
-        })
+        setFormData({...formData, [name]: value})
     }
 
     // Validate driver age
     const ageValidation = (e) => {
         const { name, value } = e.target;
         if (value < 18) {
-            setAgeError('Invalid age. Only 18+ are allowed!');
+            setStatus({...status, ageError: 'Invalid age. Only 18+ are allowed!'})
         } else if (value > 100) {
-            setAgeError('Invalid age. Max age is 100.');
+            setStatus({...status, ageError: 'Invalid age. Max age is 100.'})
         } else {
-            setAgeError('');
+            setStatus({...status, ageError: ''})
         }
         setFormData({
             ...formData, [name]: value
@@ -213,99 +220,6 @@ const Rent = () => {
         setMaxEndDate(localMaxEndDate);
     }
 
-    // Had to make a new list because start of intervals should shift -1 on startDate
-    const calculateDatesBlacklistByCarStartDates = (localBlacklist) => {
-        const localBlacklistStartDates = JSON.parse(JSON.stringify(datesBlacklistByCarStartDates));
-        Object.keys(localBlacklist).forEach((car) => {
-            const localDatesToExcludeArray = [];
-            localBlacklist[car].forEach(interval => {
-                const startDateMinusOne = new Date(interval.start);
-                startDateMinusOne.setDate(startDateMinusOne.getDate() - 1);
-                localDatesToExcludeArray.push({start: startDateMinusOne, end: new Date(interval.end)});
-            });
-            localBlacklistStartDates[car] = localDatesToExcludeArray;
-        });
-        setDatesBlacklistByCarStartDates(localBlacklistStartDates);
-    }
-
-    // Update total price
-    const priceUpdate = () => {
-        const numberOfDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-        let carPrice = 0
-        switch (formData.car) {
-            case "Volkswagen Golf, 1333kr/day":
-                carPrice = 1333;
-                break;
-            case "Volvo S60, 1500 kr/day":
-                carPrice = 1500;
-                break;
-            case "Ford Transit, 2400kr/day":
-                carPrice = 2400;
-                break;
-            case "Ford Mustang, 3000kr/day":
-                carPrice = 3000;
-                break;
-            default:
-                console.error("Car is not recognized when calculating price!");
-        }
-        const totalPrice = numberOfDays * carPrice;
-        setFormData({
-            ...formData, totalPrice: totalPrice
-        });
-    }
-
-    // Calculate datesToExclude from orders based
-    const calculateBlacklistByCar = () => {
-        const localBlacklist = JSON.parse(JSON.stringify(datesBlacklistByCar))
-
-        Object.keys(localBlacklist).forEach((car) => {
-            // Get only dates from matching car
-            if (!ordersByCar[car]) {
-                localBlacklist[car] = [];
-                return;
-            }
-            const localDatesToExcludeArray = [];
-            ordersByCar[car].forEach(dateDict => {
-                var includeStartDate = new Date(dateDict.start_date);
-                includeStartDate.setDate(includeStartDate.getDate() - 1);
-                localDatesToExcludeArray.push({ start: new Date(includeStartDate), end: new Date(dateDict.end_date) });
-            });
-
-            // If only one date is available between two intervals, fill it.
-            // Not possible to pick up and return on one day.
-            localDatesToExcludeArray.sort((a, b) => a.start - b.start);
-            for (let i = 0; i < localDatesToExcludeArray.length - 1; i++) {
-                const currentInterval = localDatesToExcludeArray[i];
-                const nextInterval = localDatesToExcludeArray[i + 1];
-                const daysGap = (nextInterval.start - currentInterval.end) / (1000 * 60 * 60 * 24);
-                if (daysGap === 1) {
-                    currentInterval.end.setDate(currentInterval.end.getDate() + 1);
-                }
-            }
-            localBlacklist[car] = localDatesToExcludeArray;
-        });
-        setDatesBlacklistByCar(localBlacklist);
-        return localBlacklist;
-    }
-
-    // Calculate nextAvailableDate and maxEndDate based on datesToExclude
-    const calculateNextAvailableDateAndMaxEnd = (localDatesToExcludeArray) => {
-        let localNextAvailableDate = new Date();
-        let localMaxEndDate = new Date("2100-01-01");
-        for (let i = 0; i < localDatesToExcludeArray[formData.car].length; i++) {
-            const interval = localDatesToExcludeArray[formData.car][i];
-            if (localNextAvailableDate < interval.start) {
-                localMaxEndDate = new Date(interval.start);
-                break;
-            }
-            const newDay = new Date(interval.end);
-            newDay.setDate(newDay.getDate() + 1);
-            localNextAvailableDate = newDay;
-        }
-        setNextAvailableDate(localNextAvailableDate);
-        setMaxEndDate(localMaxEndDate);
-    }
-
     return (
         <div className='Rent'>
             <form onSubmit={handleSubmit}>
@@ -319,7 +233,7 @@ const Rent = () => {
                 <div>
                     <div>
                         <label>Pick up date:</label>
-                        <DatePicker id="pickUpDate" minDate={new Date()} selected={startDate} onChange={handleStartDateChange} excludeDateIntervals={datesBlacklistByCarStartDates[formData.car]} />
+                        <DatePicker id="pickUpDate" minDate={new Date()} selected={startDate} onChange={handleStartDateChange} excludeDateIntervals={startDatesBlacklistByCar[formData.car]} />
                     </div>
                     <div>
                         <label>Return date: </label>
@@ -327,14 +241,14 @@ const Rent = () => {
                     </div>
                 </div>
                 <input type="text" data-testid="driverName" name='driverName' value={formData.driverName} placeholder='Name of driver' onChange={nameValidation} maxLength={30} required></input>
-                {nameError && <p className="error">{nameError}</p>}
+                {status.nameError && <p className="error">{status.nameError}</p>}
                 <input type="number" data-testid='driverAge' name='driverAge' value={formData.driverAge} placeholder='Age of driver' onChange={ageValidation} min={1} max={100} required></input>
-                {ageError && <p className="error">{ageError}</p>}
+                {status.ageError && <p className="error">{status.ageError}</p>}
                 <h2>Sum total = {formData.totalPrice.toLocaleString('sv-SE')} SEK</h2>
-                <button type="submit" disabled={submitInProgress}>Submit</button>
+                <button type="submit" disabled={status.submitInProgress}>Submit</button>
             </form>
-            {orderState && <h3>Order submitted successfully!</h3>}
-            {databaseError && <h3 style={{color: 'red'}}>{databaseError}</h3>}
+            {status.orderState && <h3>{status.orderState}</h3>}
+            {status.databaseError && <h3 style={{color: 'red'}}>{status.databaseError}</h3>}
         </div>
     );
 };

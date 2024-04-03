@@ -13,7 +13,7 @@ class App extends Component {
 	};
 
     componentDidMount() {
-		document.title = "Fortnox car rental";
+		document.title = "Car rental";
 	}
 
 
@@ -21,7 +21,7 @@ class App extends Component {
 		return (
             <Router>
                 <div className="App">
-                    <div className="top-bar">Fortnox</div>
+                    <div className="top-bar">Car rental</div>
                         <Routes>
                             <Route path="/" element={<Home/>} />
                             <Route path="/rent" element={<Rent/>} />
