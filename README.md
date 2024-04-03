@@ -1,5 +1,16 @@
-# Car Rental Fortnox
-Before you start the project make sure you have Maven, Java 17, Docker ( for easy setup of database ), Node 16 LTS and NPM installed. 
+# Car Rental
+Before you start the project make sure you have Maven, Java 17, Docker ( for easy setup of database ), Node 16 LTS and NPM installed.
+
+## Preface
+I solved this project without any prior knowledge of Javascript, React, HTML, CSS, Postgresql or Spring boot.
+I also finished the assignment within 5 working days.  
+This was the last commit on Commits on Mar 20, 2024.  
+
+Later I polished the project some more to where it is today.  
+
+As I have no prior experience with the frontend and only basic knowledge about the backend
+if you have comments or other guidance, even if it's simple stuff, please share it with me!  
+I'm very open to critic!
 
 ## How to start the project
 #### 1. Set up the database
