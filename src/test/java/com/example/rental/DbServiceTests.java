@@ -84,7 +84,7 @@ public class DbServiceTests {
     void testGetOrdersFromDatabase_Failure() {
         when(jdbcTemplate.queryForList(anyString())).thenThrow(new DataAccessException("Test exception") {});
         List<Map<String, Object>> orders = dbService.getOrdersFromDatabase();
-        assertTrue(orders.isEmpty());
+        assertThat(orders).isNull();
         assertThat(errorStream.toString()).contains(": Test exception");
     }
 
