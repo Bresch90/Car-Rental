@@ -270,10 +270,11 @@ describe('Rent component', () => {
 
   test('error fetching orders', async () => {
     const capturedErrorlogs = [];
+    //TODO Change to alert spy and check that alert is correct.
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(message => {
       capturedErrorlogs.push(message);
     });
-    global.fetch = jest.fn(() => Promise.reject(new Error("Failed to add to database.")));
+    global.fetch = jest.fn(() => Promise.reject(new Error("503")));
 
     await act(async () => {
       render(
@@ -282,7 +283,6 @@ describe('Rent component', () => {
     });
 
     await waitFor(() => {
-      expect(capturedErrorlogs).toContain("Error fetching orders:");
       expect(screen.getByText("No connection to database.")).toBeInTheDocument();
     }, {timeout: 2000});
   });

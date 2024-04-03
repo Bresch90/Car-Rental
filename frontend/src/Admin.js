@@ -27,7 +27,7 @@ const Admin = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // Function to fetch orders from the server and calculate TotalRevenue
+    // fetch orders from the server and calculate TotalRevenue
     const getOrders = async () => {
         const response = await fetch('/admin/getorders');
         if (!response.ok) {
@@ -49,7 +49,7 @@ const Admin = () => {
         setOrdersById(localOrdersById);
     };
 
-    // Function to handle deletion of all orders
+    // handle deletion of all orders
     const handleDeleteOrders = async () => {
         try {
             const response = await fetch('/admin/deleteAllOrders', {

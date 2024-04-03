@@ -98,27 +98,16 @@ describe('Admin component', () => {
 
 
   test('delete all orders', async () => {
-    const capturedLogs = [];
-    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(message => {
-      capturedLogs.push(message);
-    });
-
     const deleteAllButton = screen.getByRole('button', { name: /Delete All Orders/ });
     fireEvent.click(deleteAllButton);
 
     await waitFor(() => {
-      expect(capturedLogs).toContain("All orders successfully deleted.");
+      expect(screen.getByText('All orders successfully deleted.')).toBeInTheDocument();
     }, {timeout: 2000});
-
   });
 
 
   test('fail to delete orders', async () => {
-    const capturedErrorlogs = [];
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(message => {
-      capturedErrorlogs.push(message);
-    });
-
     global.fetch = jest.fn(() => Promise.resolve({
       ok: false
     }));
@@ -127,7 +116,7 @@ describe('Admin component', () => {
     fireEvent.click(deleteAllButton);
 
     await waitFor(() => {
-      expect(capturedErrorlogs).toContain("Failed to delete orders.");
+      expect(screen.getByText('Failed to delete orders.')).toBeInTheDocument();
     }, {timeout: 2000});
     
   });
